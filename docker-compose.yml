@@ -1,0 +1,99 @@
+services:
+  nginx:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/var/www
+    ports:
+      - "8080:80"
+    depends_on:
+      - php-fpm
+      - node
+
+  php-fpm:
+    build:
+      context: ./docker/php-fpm
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/var/www
+    environment:
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_HTTP_PORT=8123
+      - CLICKHOUSE_NATIVE_PORT=9000
+    depends_on:
+      - postgres
+      - redis
+      - clickhouse
+
+  php-cli:
+    build:
+      context: ./
+      dockerfile: docker/php-cli.docker
+    volumes:
+      - ./:/var/www
+    working_dir: /var/www
+    environment:
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_HTTP_PORT=8123
+      - CLICKHOUSE_NATIVE_PORT=9000
+      - COMPOSER_MEMORY_LIMIT=-1
+    depends_on:
+      - postgres
+      - redis
+      - clickhouse
+    tty: true
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=profitmate
+      - POSTGRES_USER=profitmate
+      - POSTGRES_PASSWORD=secret
+    ports:
+      - "5432:5432"   # если 5432 свободен — можешь сделать "5432:5432"
+    volumes:
+      - database:/var/lib/postgresql/data
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    ports:
+      - "8123:8123"   # HTTP
+      - "9000:9000"   # Native TCP
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    environment:
+      - CLICKHOUSE_DB=default
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+      - CLICKHOUSE_PASSWORD=secret
+
+  node:
+    image: node:20-alpine
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/var/www
+    working_dir: /var/www
+    tty: true
+
+  redis:
+    image: redis:alpine
+    volumes:
+      - ./docker/redis/data:/data
+    ports:
+      - "6379:6379"
+
+volumes:
+  database:
+  clickhouse_data:
