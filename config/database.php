@@ -113,6 +113,19 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'clickhouse' => [
+            'driver' => 'clickhouse',
+            'host' => env('CLICKHOUSE_HOST'),
+            'port' => env('CLICKHOUSE_PORT'),
+            'database' => env('CLICKHOUSE_DATABASE', 'default'),
+            'username' => env('CLICKHOUSE_USERNAME', 'default'),
+            'password' => env('CLICKHOUSE_PASSWORD'),
+            'options' => [
+                'timeout' => 10,
+                'protocol' => 'http' // Обычно используют HTTP интерфейс (8123)
+            ],
+        ],
+
     ],
 
     /*

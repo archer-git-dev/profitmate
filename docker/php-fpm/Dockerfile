@@ -1,4 +1,4 @@
-FROM php:8.2-fpm
+FROM php:8.4-fpm
 
 # 1. Заменил mariadb-client на libpq-dev и pdo_mysql на pdo_pgsql
 #    Добавил libzip-dev (нужен для zip, который просит composer)
@@ -10,8 +10,14 @@ RUN apt-get update && apt-get install -y \
     libjpeg62-turbo-dev \
     libgd-dev \
     libzip-dev \
+    libicu-dev \
+    libxml2-dev \
+    librabbitmq-dev \
     unzip \
     && docker-php-ext-install pdo pdo_pgsql zip
+
+RUN docker-php-ext-configure intl \
+    && docker-php-ext-install intl xml soap
 
 # 2. Добавляем ClickHouse dependencies (bcmath, sockets)
 RUN docker-php-ext-install bcmath sockets
@@ -19,6 +25,9 @@ RUN docker-php-ext-install bcmath sockets
 # Твой Redis (оставляем как есть)
 RUN pecl install redis \
     && docker-php-ext-enable redis
+
+RUN pecl install amqp \
+    && docker-php-ext-enable amqp
 
 # Exif (оставляем)
 RUN docker-php-ext-configure exif
